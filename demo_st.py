@@ -21,7 +21,7 @@ from flux.util import (
     load_ae,
     load_clip,
     load_flow_model,
-    load_t5,
+    load_bart,
 )
 
 NSFW_THRESHOLD = 0.85

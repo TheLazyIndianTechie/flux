@@ -11,7 +11,7 @@ from PIL import ExifTags, Image
 
 from flux.sampling import denoise, get_noise, get_schedule, prepare, unpack
 from flux.util import (configs, embed_watermark, load_ae, load_clip,
-                       load_flow_model, load_t5)
+                       load_flow_model, load_bart)
 from transformers import pipeline
 
 NSFW_THRESHOLD = 0.85
@@ -155,7 +155,7 @@ def main(
             idx = 0
 
     # init all components
-    t5 = load_t5(torch_device, max_length=256 if name == "flux-schnell" else 512)
+    bart = load_bart(torch_device, max_length=256 if name == "flux-schnell" else 512)
     clip = load_clip(torch_device)
     model = load_flow_model(name, device="cpu" if offload else torch_device)
     ae = load_ae(name, device="cpu" if offload else torch_device)
@@ -192,13 +192,13 @@ def main(
         if offload:
             ae = ae.cpu()
             torch.cuda.empty_cache()
-            t5, clip = t5.to(torch_device), clip.to(torch_device)
-        inp = prepare(t5, clip, x, prompt=opts.prompt)
+            bart, clip = bart.to(torch_device), clip.to(torch_device)
+        inp = prepare(bart, clip, x, prompt=opts.prompt)
         timesteps = get_schedule(opts.num_steps, inp["img"].shape[1], shift=(name != "flux-schnell"))
 
         # offload TEs to CPU, load model to gpu
         if offload:
-            t5, clip = t5.cpu(), clip.cpu()
+            bart, clip = bart.cpu(), clip.cpu()
             torch.cuda.empty_cache()
             model = model.to(torch_device)
 
